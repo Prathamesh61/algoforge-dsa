@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 import { Sidebar } from "@/components/navigation/Sidebar";
 import { Navbar } from "@/components/navigation/Navbar";
@@ -23,6 +24,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark h-full">
       <body className={`${inter.className} min-h-screen bg-slate-950 text-slate-100 flex flex-col antialiased selection:bg-cyan-500/20 selection:text-cyan-300`}>
+        <Script src="https://accounts.google.com/gsi/client" strategy="afterInteractive" />
         <AuthProvider>
           <AppShell>
             {children}

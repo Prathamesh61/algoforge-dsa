@@ -84,11 +84,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const loginWithGoogle = async (idToken?: string) => {
+    if (!idToken) {
+      throw new Error('No Google credentials provided. Please sign in with your Google account.');
+    }
     setIsLoading(true);
     try {
-      // If no token passed, generate a mock developer token for testing / quick start
-      const tokenToSend = idToken || `mock_token_developer@google.com`;
-      const res = await apiClient.post('/auth/google/', { id_token: tokenToSend });
+      const res = await apiClient.post('/auth/google/', { id_token: idToken });
       apiClient.setTokens(res.tokens.access, res.tokens.refresh);
       setUser(res.user);
       if (res.user.profile) {
