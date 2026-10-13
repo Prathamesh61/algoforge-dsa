@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, Suspense } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import {
   Cpu,
   Search,
@@ -40,10 +41,32 @@ type AlgorithmKey =
   | 'two-pointer'
   | 'kadane';
 
-export default function VisualizerLabPage() {
-  const [selectedAlgo, setSelectedAlgo] = useState<AlgorithmKey>('binary-search');
+const VALID_ALGOS: AlgorithmKey[] = [
+  'binary-search',
+  'linear-search',
+  'bubble-sort',
+  'selection-sort',
+  'insertion-sort',
+  'merge-sort',
+  'quick-sort',
+  'two-pointer',
+  'kadane',
+];
+
+function VisualizerLabContent() {
+  const searchParams = useSearchParams();
+  const rawAlgo = searchParams.get('algo') as AlgorithmKey | null;
+  const initialAlgo: AlgorithmKey = rawAlgo && VALID_ALGOS.includes(rawAlgo) ? rawAlgo : 'binary-search';
+
+  const [selectedAlgo, setSelectedAlgo] = useState<AlgorithmKey>(initialAlgo);
   const [dataset, setDataset] = useState<number[]>([2, 5, 8, 12, 16, 23, 38, 45, 56, 72]);
   const [target, setTarget] = useState<number>(23);
+
+  useEffect(() => {
+    if (rawAlgo && VALID_ALGOS.includes(rawAlgo) && rawAlgo !== selectedAlgo) {
+      setSelectedAlgo(rawAlgo);
+    }
+  }, [rawAlgo]);
 
   // Generate random data
   const handleRandomize = () => {
@@ -441,5 +464,22 @@ export default function VisualizerLabPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function VisualizerLabPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+          <div className="flex flex-col items-center gap-3">
+            <div className="w-8 h-8 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" />
+            <span className="text-xs font-semibold text-slate-400">Loading Algorithm Visualizer...</span>
+          </div>
+        </div>
+      }
+    >
+      <VisualizerLabContent />
+    </Suspense>
   );
 }

@@ -36,6 +36,7 @@ class SubmissionListCreateView(APIView):
             source_code=source_code,
             status='Queued'
         )
+        submission.is_daily_challenge = bool(request.data.get('is_daily_challenge') or request.data.get('is_daily'))
 
         # Run automated evaluation against public + hidden test cases
         evaluated = SubmissionEvaluator.evaluate(submission)

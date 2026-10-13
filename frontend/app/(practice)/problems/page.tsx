@@ -17,6 +17,7 @@ import {
   ArrowRight
 } from 'lucide-react';
 import { ProblemListItem, ProblemDifficulty, ProblemTag } from '@/types';
+import { apiClient } from '@/lib/api-client';
 
 // Fallback seed data in case backend server is unreachable
 const FALLBACK_PROBLEMS: ProblemListItem[] = [
@@ -105,21 +106,15 @@ export default function ProblemsPage() {
   useEffect(() => {
     async function loadData() {
       try {
-        const [probRes, tagRes] = await Promise.all([
-          fetch('http://127.0.0.1:8000/api/v1/problems/'),
-          fetch('http://127.0.0.1:8000/api/v1/problems/tags/')
+        const [pData, tData] = await Promise.all([
+          apiClient.get<ProblemListItem[]>('/problems/').catch(() => null),
+          apiClient.get<ProblemTag[]>('/problems/tags/').catch(() => null),
         ]);
-        if (probRes.ok) {
-          const pData = await probRes.json();
-          if (Array.isArray(pData) && pData.length > 0) {
-            setProblems(pData);
-          }
+        if (pData && Array.isArray(pData) && pData.length > 0) {
+          setProblems(pData);
         }
-        if (tagRes.ok) {
-          const tData = await tagRes.json();
-          if (Array.isArray(tData)) {
-            setTags(tData);
-          }
+        if (tData && Array.isArray(tData)) {
+          setTags(tData);
         }
       } catch (err) {
         console.warn('Backend unavailable, rendering seeded problem set.');

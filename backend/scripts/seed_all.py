@@ -24,8 +24,8 @@ def run_all():
         print(f"Error seeding courses: {e}")
 
     try:
-        from scripts.seed_problems import run as seed_problems
-        print("\n--- 2. Seeding Problems & Test Cases ---")
+        from scripts.seed_problems_expanded import run as seed_problems
+        print("\n--- 2. Seeding Problems & Test Cases (291 Problems & 1,164 Test Cases) ---")
         seed_problems()
     except Exception as e:
         print(f"Error seeding problems: {e}")

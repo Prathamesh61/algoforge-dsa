@@ -52,6 +52,17 @@ export default function DashboardPage() {
       }
     }
     loadDashboard();
+
+    const handleProgressUpdate = () => {
+      loadDashboard();
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('algoforge:progress-updated', handleProgressUpdate);
+      return () => {
+        window.removeEventListener('algoforge:progress-updated', handleProgressUpdate);
+      };
+    }
   }, []);
 
   const displayName = user?.fullName || user?.username || 'Coder';
@@ -269,10 +280,17 @@ export default function DashboardPage() {
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold uppercase tracking-wider text-amber-400">Daily Challenge</span>
               <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                +50 XP
+                XP x2 Bonus
               </span>
             </div>
-            <h3 className="text-lg font-bold text-white mt-1">Today’s Goal</h3>
+            <div className="flex items-center justify-between mt-1">
+              <h3 className="text-lg font-bold text-white">Today’s Goal</h3>
+              {dailyGoal.solved >= dailyGoal.target && dailyGoal.target > 0 && (
+                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
+                  Completed 🔥
+                </span>
+              )}
+            </div>
             <p className="text-xs text-slate-400 mt-1">Solve {dailyGoal.target} problems to maintain your streak.</p>
           </div>
 
@@ -291,11 +309,12 @@ export default function DashboardPage() {
 
           <div className="pt-3 border-t border-slate-800/80">
             <Link
-              href="/problems"
-              className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700/80 text-white font-semibold text-xs border border-slate-700 transition-all"
+              href="/problems/daily"
+              className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500/20 to-orange-500/20 hover:from-amber-500/30 hover:to-orange-500/30 text-amber-300 font-semibold text-xs border border-amber-500/30 transition-all shadow-md shadow-amber-500/5"
             >
-              <span>Practice Next Problem</span>
-              <ArrowRight className="w-3.5 h-3.5 text-cyan-400" />
+              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+              <span>Tackle Today’s Challenge (2x XP)</span>
+              <ArrowRight className="w-3.5 h-3.5 text-amber-400" />
             </Link>
           </div>
         </div>

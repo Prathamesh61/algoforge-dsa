@@ -102,6 +102,17 @@ export default function ProfilePage() {
       }
     }
     loadProfileData();
+
+    const handleProgressUpdate = () => {
+      loadProfileData();
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('algoforge:progress-updated', handleProgressUpdate);
+      return () => {
+        window.removeEventListener('algoforge:progress-updated', handleProgressUpdate);
+      };
+    }
   }, []);
 
   const handleSaveProfile = async (e: React.FormEvent) => {
@@ -116,6 +127,9 @@ export default function ProfilePage() {
         preferred_language: preferredLanguage,
       });
       await refreshUserData();
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('algoforge:progress-updated'));
+      }
       setIsEditing(false);
     } finally {
       setSaving(false);

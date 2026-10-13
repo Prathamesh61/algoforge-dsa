@@ -25,6 +25,9 @@ class UserSettingsSerializer(serializers.ModelSerializer):
         ]
 
 class UserProfileSerializer(serializers.ModelSerializer):
+    today_problems_solved = serializers.SerializerMethodField()
+    daily_goal_solved = serializers.SerializerMethodField()
+
     class Meta:
         model = UserProfile
         fields = [
@@ -42,6 +45,8 @@ class UserProfileSerializer(serializers.ModelSerializer):
             'problems_solved_count',
             'lessons_completed_count',
             'achievements_count',
+            'today_problems_solved',
+            'daily_goal_solved',
         ]
         read_only_fields = [
             'total_xp',
@@ -51,7 +56,22 @@ class UserProfileSerializer(serializers.ModelSerializer):
             'problems_solved_count',
             'lessons_completed_count',
             'achievements_count',
+            'today_problems_solved',
+            'daily_goal_solved',
         ]
+
+    def get_today_problems_solved(self, obj):
+        try:
+            from apps.progress.models import UserDailyActivity
+            from django.utils import timezone
+            today = timezone.now().date()
+            act = UserDailyActivity.objects.filter(user=obj.user, activity_date=today).first()
+            return act.problems_solved if act else 0
+        except Exception:
+            return 0
+
+    def get_daily_goal_solved(self, obj):
+        return self.get_today_problems_solved(obj)
 
 
 class UserSerializer(serializers.ModelSerializer):

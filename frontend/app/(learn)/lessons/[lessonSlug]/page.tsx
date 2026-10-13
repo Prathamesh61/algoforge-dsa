@@ -117,6 +117,9 @@ export default function LessonPage() {
       await apiClient.post(`/courses/lessons/${slug}/complete/`);
       setCompleted(true);
       await refreshUserData();
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('algoforge:progress-updated'));
+      }
       // Celebrate with confetti
       confetti({
         particleCount: 80,

@@ -89,6 +89,11 @@ class SubmissionEvaluator:
     def _award_user_progress(cls, submission: Submission):
         user = submission.user
         problem = submission.problem
+        profile = getattr(user, 'profile', None)
+        if not profile:
+            return
+
+        today = timezone.now().date()
 
         # Check if already solved previously
         prior_solved = Submission.objects.filter(
@@ -97,50 +102,77 @@ class SubmissionEvaluator:
             status='Accepted'
         ).exclude(id=submission.id).exists()
 
-        profile = getattr(user, 'profile', None)
-        if profile and not prior_solved:
-            # First time solved: award XP and increment count
-            profile.total_xp += problem.xp_reward
+        # Check if this problem is flagged and verified as today's Daily Challenge
+        is_daily_flag = getattr(submission, 'is_daily_challenge', False)
+        from apps.problems.services import get_daily_challenge_problem
+        daily_challenge_problem = get_daily_challenge_problem(today)
+        is_daily_challenge = is_daily_flag and (daily_challenge_problem and daily_challenge_problem.id == problem.id)
+        already_solved_daily_today = False
+        if is_daily_challenge:
+            already_solved_daily_today = Submission.objects.filter(
+                user=user,
+                problem=problem,
+                status='Accepted',
+                created_at__date=today
+            ).exclude(id=submission.id).exists()
+
+        # Calculate XP to award
+        xp_to_award = 0
+        if not prior_solved:
+            xp_to_award += problem.xp_reward
             profile.problems_solved_count += 1
-            profile.current_level = (profile.total_xp // 100) + 1
+        elif is_daily_challenge and not already_solved_daily_today:
+            # Re-solving today's daily challenge awards daily challenge completion XP
+            xp_to_award += problem.xp_reward
+        else:
+            # Repeat practice solve
+            xp_to_award += 5
 
-            # Update streak
-            today = timezone.now().date()
-            if profile.last_active_date != today:
-                if profile.last_active_date == today - datetime.timedelta(days=1):
-                    profile.current_streak += 1
-                elif profile.last_active_date is None or profile.last_active_date < today - datetime.timedelta(days=1):
-                    profile.current_streak = 1
+        # Double XP bonus if completing today's daily challenge
+        if is_daily_challenge and not already_solved_daily_today:
+            xp_to_award += problem.xp_reward
 
-                if profile.current_streak > profile.longest_streak:
-                    profile.longest_streak = profile.current_streak
+        profile.total_xp += xp_to_award
+        profile.current_level = (profile.total_xp // 100) + 1
 
-                profile.last_active_date = today
+        # Always update streak on accepted submission
+        if profile.last_active_date != today:
+            if profile.last_active_date == today - datetime.timedelta(days=1):
+                profile.current_streak += 1
+            elif profile.last_active_date is None or profile.last_active_date < today - datetime.timedelta(days=1):
+                profile.current_streak = 1
 
-            profile.save()
+            if profile.current_streak > profile.longest_streak:
+                profile.longest_streak = profile.current_streak
 
-            # Record Daily Activity
-            daily_act, _ = UserDailyActivity.objects.get_or_create(
-                user=user,
-                activity_date=today,
-                defaults={'problems_solved': 0, 'xp_earned': 0}
-            )
-            daily_act.problems_solved += 1
-            daily_act.xp_earned += problem.xp_reward
-            daily_act.save()
+            profile.last_active_date = today
 
-            # Record Recent Activity
-            UserRecentActivity.objects.create(
-                user=user,
-                activity_type='problem_solved',
-                title=f'Solved {problem.title}',
-                subtitle=f'{problem.difficulty} • +{problem.xp_reward} XP',
-                xp_earned=problem.xp_reward
-            )
+        profile.save()
 
-            # Auto-check and unlock achievements
-            try:
-                from apps.achievements.services.evaluator import AchievementChecker
-                AchievementChecker.check_and_unlock(user)
-            except Exception as e:
-                pass
+        # Record Daily Activity (increments daily goal solved count)
+        daily_act, _ = UserDailyActivity.objects.get_or_create(
+            user=user,
+            activity_date=today,
+            defaults={'problems_solved': 0, 'xp_earned': 0}
+        )
+        daily_act.problems_solved += 1
+        daily_act.xp_earned += xp_to_award
+        daily_act.save()
+
+        # Record Recent Activity
+        activity_title = f'Completed Daily Challenge: {problem.title}' if (is_daily_challenge and not already_solved_daily_today) else f'Solved {problem.title}'
+        activity_subtitle = f'{problem.difficulty} • +{xp_to_award} XP' + (' (2x Daily Bonus!)' if (is_daily_challenge and not already_solved_daily_today) else '')
+        UserRecentActivity.objects.create(
+            user=user,
+            activity_type='problem_solved',
+            title=activity_title,
+            subtitle=activity_subtitle,
+            xp_earned=xp_to_award
+        )
+
+        # Auto-check and unlock achievements
+        try:
+            from apps.achievements.services.evaluator import AchievementChecker
+            AchievementChecker.check_and_unlock(user)
+        except Exception:
+            pass

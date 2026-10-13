@@ -5,26 +5,44 @@ export interface User {
   email: string;
   username: string;
   fullName: string;
+  full_name?: string;
   avatarUrl?: string;
+  avatar_url?: string;
   authProvider: 'email' | 'google';
+  auth_provider?: string;
   dateJoined: string;
+  created_at?: string;
   profile?: UserProfile;
 }
 
 export interface UserProfile {
-  userId: string;
+  userId?: string;
+  user_id?: string;
   headline?: string;
   bio?: string;
   totalXp: number;
+  total_xp?: number;
   currentLevel: number;
+  current_level?: number;
   currentStreak: number;
+  current_streak?: number;
   longestStreak: number;
+  longest_streak?: number;
   lastActiveDate?: string;
+  last_active_date?: string;
   dailyGoalTarget: number;
+  daily_goal_target?: number;
+  dailyGoalSolved?: number;
+  daily_goal_solved?: number;
+  today_problems_solved?: number;
   preferredLanguage: string;
+  preferred_language?: string;
   problemsSolvedCount: number;
+  problems_solved_count?: number;
   lessonsCompletedCount: number;
+  lessons_completed_count?: number;
   achievementsUnlockedCount: number;
+  achievements_count?: number;
 }
 
 export interface Course {

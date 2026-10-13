@@ -116,6 +116,17 @@ export default function AnalyticsPage() {
       }
     }
     loadAnalytics();
+
+    const handleProgressUpdate = () => {
+      loadAnalytics();
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('algoforge:progress-updated', handleProgressUpdate);
+      return () => {
+        window.removeEventListener('algoforge:progress-updated', handleProgressUpdate);
+      };
+    }
   }, []);
 
   return (

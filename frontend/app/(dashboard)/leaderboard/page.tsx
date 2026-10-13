@@ -59,6 +59,17 @@ export default function LeaderboardPage() {
       }
     }
     loadLeaderboard();
+
+    const handleProgressUpdate = () => {
+      loadLeaderboard();
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('algoforge:progress-updated', handleProgressUpdate);
+      return () => {
+        window.removeEventListener('algoforge:progress-updated', handleProgressUpdate);
+      };
+    }
   }, []);
 
   const filtered = entries.filter((e) =>

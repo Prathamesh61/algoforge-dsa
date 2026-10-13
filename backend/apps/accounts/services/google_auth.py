@@ -5,6 +5,11 @@ from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
 from apps.accounts.models import User
 
+import requests
+
+_cached_session = requests.Session()
+_cached_google_request = google_requests.Request(session=_cached_session)
+
 def verify_google_id_token(token_str: str) -> dict:
     """
     Verifies a Google ID token and returns the decoded payload.
@@ -25,8 +30,7 @@ def verify_google_id_token(token_str: str) -> dict:
         }
 
     try:
-        request = google_requests.Request()
-        id_info = id_token.verify_oauth2_token(token_str, request, client_id if client_id else None)
+        id_info = id_token.verify_oauth2_token(token_str, _cached_google_request, client_id if client_id else None)
         return id_info
     except Exception as e:
         raise ValueError(f"Invalid Google ID token: {str(e)}")
