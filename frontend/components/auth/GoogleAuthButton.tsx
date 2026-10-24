@@ -22,6 +22,9 @@ export function GoogleAuthButton({ mode = 'signin', onError }: GoogleAuthButtonP
     '121510940960-8dp887ad5lk4s0tvb7mp6hv176ercmnm.apps.googleusercontent.com';
 
   useEffect(() => {
+    // Prefetch dashboard route in background so redirection is instantaneous
+    router.prefetch('/dashboard');
+
     let checkInterval: NodeJS.Timeout;
 
     const initGoogle = () => {
@@ -41,10 +44,9 @@ export function GoogleAuthButton({ mode = 'signin', onError }: GoogleAuthButtonP
             try {
               setIsAuthenticating(true);
               await loginWithGoogle(response.credential);
-              router.push('/dashboard');
+              router.replace('/dashboard');
             } catch (err: any) {
               onError?.(err.message || 'Google authentication failed.');
-            } finally {
               setIsAuthenticating(false);
             }
           },
@@ -78,7 +80,7 @@ export function GoogleAuthButton({ mode = 'signin', onError }: GoogleAuthButtonP
         if (initGoogle()) {
           clearInterval(checkInterval);
         }
-      }, 200);
+      }, 50);
     }
 
     return () => {

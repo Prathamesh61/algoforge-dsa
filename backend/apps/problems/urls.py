@@ -3,6 +3,7 @@ from apps.problems.views import ProblemListView, ProblemDetailView, ProblemTagLi
 
 urlpatterns = [
     path('', ProblemListView.as_view(), name='problem_list'),
+    path('daily/', DailyProblemView.as_view(), name='problem_daily'),
     path('tags/', ProblemTagListView.as_view(), name='problem_tag_list'),
     path('daily/', DailyProblemView.as_view(), name='daily_problem'),
     path('<slug:slug>/', ProblemDetailView.as_view(), name='problem_detail'),

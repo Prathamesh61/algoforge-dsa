@@ -139,6 +139,9 @@ export default function SettingsPage() {
       });
 
       await refreshUserData();
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('algoforge:progress-updated'));
+      }
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (err: any) {

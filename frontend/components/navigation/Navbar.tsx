@@ -40,10 +40,11 @@ export function Navbar() {
     router.push('/login');
   };
 
-  const totalXp = profile?.totalXp ?? 0;
-  const currentStreak = profile?.currentStreak ?? 0;
-  const dailyGoalSolved = profile?.problemsSolvedCount ? Math.min(profile.problemsSolvedCount, profile.dailyGoalTarget || 5) : 0;
-  const dailyGoalTarget = profile?.dailyGoalTarget || 5;
+  const totalXp = profile?.totalXp ?? profile?.total_xp ?? 0;
+  const currentStreak = profile?.currentStreak ?? profile?.current_streak ?? 0;
+  const dailyGoalSolved = profile?.dailyGoalSolved ?? profile?.daily_goal_solved ?? profile?.today_problems_solved ?? 0;
+  const dailyGoalTarget = profile?.dailyGoalTarget ?? profile?.daily_goal_target ?? 5;
+  const isGoalReached = dailyGoalSolved >= dailyGoalTarget && dailyGoalTarget > 0;
 
   return (
     <>
@@ -78,11 +79,21 @@ export function Navbar() {
         </div>
 
         {/* Daily Goal Mini */}
-        <div className="hidden md:flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900 border border-slate-800 text-slate-300 text-xs">
-          <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
+        <Link
+          href="/dashboard"
+          className={`hidden md:flex items-center gap-2 px-3 py-1 rounded-full border text-xs transition-colors ${
+            isGoalReached
+              ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 font-semibold shadow-sm shadow-emerald-500/20'
+              : 'bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700'
+          }`}
+        >
+          <Sparkles className={`w-3.5 h-3.5 ${isGoalReached ? 'text-emerald-400 animate-pulse' : 'text-cyan-400'}`} />
           <span className="font-medium">Goal:</span>
-          <span className="font-bold text-cyan-400">{dailyGoalSolved}/{dailyGoalTarget} Solved</span>
-        </div>
+          <span className={`font-bold ${isGoalReached ? 'text-emerald-300' : 'text-cyan-400'}`}>
+            {dailyGoalSolved}/{dailyGoalTarget} Solved
+          </span>
+          {isGoalReached && <span className="text-[10px] bg-emerald-500/20 px-1.5 py-0.5 rounded text-emerald-300 font-bold">Done 🔥</span>}
+        </Link>
 
         {/* Notifications */}
         <button

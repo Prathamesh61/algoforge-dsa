@@ -106,15 +106,15 @@ export default function ProblemsPage() {
   useEffect(() => {
     async function loadData() {
       try {
-        const [probData, tagData] = await Promise.all([
-          apiClient.get<ProblemListItem[]>('/problems/'),
-          apiClient.get<ProblemTag[]>('/problems/tags/')
+        const [pData, tData] = await Promise.all([
+          apiClient.get<ProblemListItem[]>('/problems/').catch(() => null),
+          apiClient.get<ProblemTag[]>('/problems/tags/').catch(() => null),
         ]);
-        if (probData && Array.isArray(probData) && probData.length > 0) {
-          setProblems(probData);
+        if (pData && Array.isArray(pData) && pData.length > 0) {
+          setProblems(pData);
         }
-        if (tagData && Array.isArray(tagData)) {
-          setTags(tagData);
+        if (tData && Array.isArray(tData)) {
+          setTags(tData);
         }
       } catch (err) {
         console.warn('Backend unavailable, rendering seeded problem set.');

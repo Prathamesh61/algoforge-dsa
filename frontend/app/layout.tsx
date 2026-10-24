@@ -7,6 +7,7 @@ import { Navbar } from "@/components/navigation/Navbar";
 import { MobileNav } from "@/components/navigation/MobileNav";
 import { AuthProvider } from "@/features/auth/AuthContext";
 import { AppShell } from "@/components/navigation/AppShell";
+import { StoreProvider } from "@/store";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -23,13 +24,19 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="dark h-full">
+      <head>
+        <link rel="preconnect" href="https://accounts.google.com" />
+        <link rel="dns-prefetch" href="https://accounts.google.com" />
+      </head>
       <body className={`${inter.className} min-h-screen bg-slate-950 text-slate-100 flex flex-col antialiased selection:bg-cyan-500/20 selection:text-cyan-300`}>
         <Script src="https://accounts.google.com/gsi/client" strategy="afterInteractive" />
-        <AuthProvider>
-          <AppShell>
-            {children}
-          </AppShell>
-        </AuthProvider>
+        <StoreProvider>
+          <AuthProvider>
+            <AppShell>
+              {children}
+            </AppShell>
+          </AuthProvider>
+        </StoreProvider>
       </body>
     </html>
   );

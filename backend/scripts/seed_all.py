@@ -35,11 +35,11 @@ def run_all():
         print("\n--- 2. Seeding Core Problems & Test Cases ---")
         seed_problems()
     except Exception as e:
-        print(f"Error seeding problems: {e}")
+        print(f"Error seeding core problems: {e}")
 
     try:
         from scripts.seed_problems_expanded import run as seed_problems_expanded
-        print("\n--- 2b. Seeding Expanded Problem Library (290+ problems) ---")
+        print("\n--- 2b. Seeding Expanded Problem Library (291 Problems & 1,164 Test Cases) ---")
         seed_problems_expanded()
     except Exception as e:
         print(f"Error seeding expanded problems: {e}")

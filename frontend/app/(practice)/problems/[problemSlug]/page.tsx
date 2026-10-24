@@ -39,6 +39,7 @@ import {
 } from 'lucide-react';
 import { ProblemDetail, ProblemDifficulty } from '@/types';
 import { apiClient } from '@/lib/api-client';
+import { useAuth } from '@/features/auth/AuthContext';
 
 const DIFFICULTY_BADGES: Record<ProblemDifficulty, string> = {
   Easy: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
@@ -46,10 +47,118 @@ const DIFFICULTY_BADGES: Record<ProblemDifficulty, string> = {
   Hard: 'bg-rose-500/10 text-rose-400 border-rose-500/20'
 };
 
+const FALLBACK_PROBLEM_MAP: Record<string, ProblemDetail> = {
+  'two-sum': {
+    id: '1',
+    slug: 'two-sum',
+    title: 'Two Sum',
+    difficulty: 'Easy',
+    xp_reward: 20,
+    tags: [
+      { id: '1', name: 'Array', slug: 'array' },
+      { id: '2', name: 'Hash Map', slug: 'hash-map' }
+    ],
+    description_markdown: `Given an array of integers \`nums\` and an integer \`target\`, return indices of the two numbers such that they add up to \`target\`.\n\nYou may assume that each input would have **exactly one solution**, and you may not use the same element twice.\n\nYou can return the answer in any order.`,
+    input_format: 'Line 1: Space-separated integers representing the array nums\nLine 2: Single integer representing target',
+    output_format: 'Space-separated indices i j',
+    constraints: '2 <= nums.length <= 10^4\n-10^9 <= nums[i] <= 10^9\n-10^9 <= target <= 10^9\nOnly one valid answer exists.',
+    examples: [
+      {
+        input: '2 7 11 15\n9',
+        output: '0 1',
+        explanation: 'Because nums[0] + nums[1] == 9, we return 0 1.'
+      },
+      {
+        input: '3 2 4\n6',
+        output: '1 2',
+        explanation: 'Because nums[1] + nums[2] == 6, we return 1 2.'
+      }
+    ],
+    time_limit_ms: 2000,
+    memory_limit_mb: 256,
+    starter_templates: {
+      python: `import sys\n\ndef two_sum(nums, target):\n    # Write your solution here\n    seen = {}\n    for i, num in enumerate(nums):\n        comp = target - num\n        if comp in seen:\n            return f"{seen[comp]} {i}"\n        seen[num] = i\n    return ""\n\nif __name__ == '__main__':\n    lines = [l.strip() for l in sys.stdin.read().strip().split('\\n') if l.strip()]\n    if len(lines) >= 2:\n        nums = list(map(int, lines[0].split()))\n        target = int(lines[1])\n        print(two_sum(nums, target))\n`,
+      javascript: `const fs = require('fs');\n\nfunction twoSum(nums, target) {\n    const map = new Map();\n    for (let i = 0; i < nums.length; i++) {\n        const comp = target - nums[i];\n        if (map.has(comp)) return \`\${map.get(comp)} \${i}\`;\n        map.set(nums[i], i);\n    }\n    return '';\n}\n\nconst input = fs.readFileSync(0, 'utf-8').trim().split('\\n');\nif (input.length >= 2) {\n    const nums = input[0].trim().split(/\\s+/).map(Number);\n    const target = Number(input[1].trim());\n    console.log(twoSum(nums, target));\n}\n`,
+      cpp: `#include <iostream>\n#include <vector>\n#include <unordered_map>\n#include <sstream>\n\nusing namespace std;\n\nint main() {\n    string line1, line2;\n    if (getline(cin, line1) && getline(cin, line2)) {\n        stringstream ss(line1);\n        vector<int> nums;\n        int val;\n        while (ss >> val) nums.push_back(val);\n        int target = stoi(line2);\n        unordered_map<int, int> mp;\n        for (int i = 0; i < nums.size(); i++) {\n            int comp = target - nums[i];\n            if (mp.count(comp)) {\n                cout << mp[comp] << " " << i << endl;\n                return 0;\n            }\n            mp[nums[i]] = i;\n        }\n    }\n    return 0;\n}\n`
+    },
+    public_test_cases: [
+      {
+        id: 'tc-1',
+        input_data: '2 7 11 15\n9',
+        expected_output: '0 1',
+        is_hidden: false,
+        display_order: 1
+      },
+      {
+        id: 'tc-2',
+        input_data: '3 2 4\n6',
+        expected_output: '1 2',
+        is_hidden: false,
+        display_order: 2
+      }
+    ],
+    is_solved: false
+  },
+  'binary-search': {
+    id: '2',
+    slug: 'binary-search',
+    title: 'Binary Search',
+    difficulty: 'Easy',
+    xp_reward: 20,
+    tags: [
+      { id: '1', name: 'Array', slug: 'array' },
+      { id: '3', name: 'Binary Search', slug: 'binary-search' }
+    ],
+    description_markdown: `Given an array of integers \`nums\` which is sorted in ascending order, and an integer \`target\`, write a function to search \`target\` in \`nums\`. If \`target\` exists, then return its index. Otherwise, return \`-1\`.\n\nYou must write an algorithm with \`O(log n)\` runtime complexity.`,
+    input_format: 'Line 1: Space-separated sorted integers representing nums\nLine 2: Single integer representing target',
+    output_format: 'Single integer representing the index of target or -1',
+    constraints: '1 <= nums.length <= 10^4\n-10^4 < nums[i], target < 10^4\nAll the integers in nums are unique.\nnums is sorted in ascending order.',
+    examples: [
+      {
+        input: '-1 0 3 5 9 12\n9',
+        output: '4',
+        explanation: '9 exists in nums and its index is 4'
+      },
+      {
+        input: '-1 0 3 5 9 12\n2',
+        output: '-1',
+        explanation: '2 does not exist in nums so return -1'
+      }
+    ],
+    time_limit_ms: 2000,
+    memory_limit_mb: 256,
+    starter_templates: {
+      python: `import sys\n\ndef binary_search(nums, target):\n    low, high = 0, len(nums) - 1\n    while low <= high:\n        mid = (low + high) // 2\n        if nums[mid] == target:\n            return mid\n        elif nums[mid] < target:\n            low = mid + 1\n        else:\n            high = mid - 1\n    return -1\n\nif __name__ == '__main__':\n    lines = [l.strip() for l in sys.stdin.read().strip().split('\\n') if l.strip()]\n    if len(lines) >= 2:\n        nums = list(map(int, lines[0].split()))\n        target = int(lines[1])\n        print(binary_search(nums, target))\n`,
+      javascript: `const fs = require('fs');\n\nfunction binarySearch(nums, target) {\n    let low = 0, high = nums.length - 1;\n    while (low <= high) {\n        const mid = Math.floor((low + high) / 2);\n        if (nums[mid] === target) return mid;\n        if (nums[mid] < target) low = mid + 1;\n        else high = mid - 1;\n    }\n    return -1;\n}\n\nconst input = fs.readFileSync(0, 'utf-8').trim().split('\\n');\nif (input.length >= 2) {\n    const nums = input[0].trim().split(/\\s+/).map(Number);\n    const target = Number(input[1].trim());\n    console.log(binarySearch(nums, target));\n}\n`,
+      cpp: `#include <iostream>\n#include <vector>\n#include <sstream>\n\nusing namespace std;\n\nint main() {\n    string line1, line2;\n    if (getline(cin, line1) && getline(cin, line2)) {\n        stringstream ss(line1);\n        vector<int> nums;\n        int val;\n        while (ss >> val) nums.push_back(val);\n        int target = stoi(line2);\n        int low = 0, high = nums.size() - 1;\n        int ans = -1;\n        while (low <= high) {\n            int mid = low + (high - low) / 2;\n            if (nums[mid] == target) { ans = mid; break; }\n            if (nums[mid] < target) low = mid + 1;\n            else high = mid - 1;\n        }\n        cout << ans << endl;\n    }\n    return 0;\n}\n`
+    },
+    public_test_cases: [
+      {
+        id: 'tc-1',
+        input_data: '-1 0 3 5 9 12\n9',
+        expected_output: '4',
+        is_hidden: false,
+        display_order: 1
+      },
+      {
+        id: 'tc-2',
+        input_data: '-1 0 3 5 9 12\n2',
+        expected_output: '-1',
+        is_hidden: false,
+        display_order: 2
+      }
+    ],
+    is_solved: false
+  }
+};
+
 export default function ProblemWorkspacePage() {
   const params = useParams();
   const router = useRouter();
-  const slug = (params?.problemSlug as string) || 'two-sum';
+  const { user, refreshUserData } = useAuth();
+  const rawSlug = (params?.problemSlug as string) || 'two-sum';
+  const isDaily = rawSlug === 'daily';
+  const slug = isDaily ? 'two-sum' : rawSlug;
 
   const [problem, setProblem] = useState<ProblemDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -103,23 +212,37 @@ export default function ProblemWorkspacePage() {
     async function fetchProblem() {
       try {
         setLoading(true);
-        const data = await apiClient.get<ProblemDetail>(`/problems/${slug}/`);
-        if (data) {
-          setProblem(data);
+        const endpoint = isDaily ? '/problems/daily/' : `/problems/${slug}/`;
+        const data = await apiClient.get<ProblemDetail>(endpoint).catch(() => null);
+        const resolved = data || FALLBACK_PROBLEM_MAP[slug] || null;
+        if (resolved) {
+          setProblem(resolved);
           const initialLang = 'python';
-          setCode(data.starter_templates?.[initialLang] || '# Write code here');
-          if (data.public_test_cases?.length > 0) {
-            setCustomInput(data.public_test_cases[0].input_data);
+          setCode(resolved.starter_templates?.[initialLang] || '# Write code here');
+          if (resolved.public_test_cases?.length > 0) {
+            setCustomInput(resolved.public_test_cases[0].input_data);
           }
+        } else {
+          setProblem(null);
         }
       } catch (e) {
         console.error('Failed to fetch problem from backend', e);
+        if (FALLBACK_PROBLEM_MAP[slug]) {
+          const fallback = FALLBACK_PROBLEM_MAP[slug];
+          setProblem(fallback);
+          setCode(fallback.starter_templates?.['python'] || '# Write code here');
+          if (fallback.public_test_cases?.length > 0) {
+            setCustomInput(fallback.public_test_cases[0].input_data);
+          }
+        } else {
+          setProblem(null);
+        }
       } finally {
         setLoading(false);
       }
     }
     fetchProblem();
-  }, [slug]);
+  }, [slug, isDaily]);
 
   // Handle language switch
   const handleLanguageChange = (newLang: 'python' | 'javascript' | 'cpp' | 'java') => {
@@ -307,10 +430,12 @@ export default function ProblemWorkspacePage() {
     setRunResult({ status: 'idle', actualOutput: '' });
 
     try {
+      const isDailyChallengeSolve = isDaily || (problem as any)?.is_daily_challenge;
       const res = await apiClient.post<any>('/submissions/', {
-        problem_slug: slug,
+        problem_slug: problem?.slug || slug,
         language,
         source_code: code,
+        is_daily_challenge: isDailyChallengeSolve,
       });
 
       if (res && (res.status === 'Accepted' || res.verdict === 'Accepted')) {
@@ -320,11 +445,16 @@ export default function ProblemWorkspacePage() {
           origin: { y: 0.6 }
         });
 
+        const xpAwarded = isDailyChallengeSolve ? ((problem?.xp_reward || 20) * 2) : (problem?.xp_reward || 20);
+        const acceptedMsg = isDailyChallengeSolve
+          ? `Daily Challenge Conquered! +${xpAwarded} XP Awarded (2x Bonus!).`
+          : `Accepted! +${xpAwarded} XP Awarded.`;
+
         setRunResult({
           status: 'success',
           actualOutput: 'All test cases passed successfully!',
           executionTimeMs: res.execution_time_ms || 42,
-          message: `Accepted! +${problem?.xp_reward || 20} XP Awarded.`,
+          message: acceptedMsg,
         });
 
         // Mark all public test cases as passed
@@ -334,6 +464,14 @@ export default function ProblemWorkspacePage() {
             updated[idx] = 'passed';
           });
           setTestCaseStatuses(updated);
+        }
+
+        // Instantly refresh user profile & broadcast progress update across the app
+        try {
+          await refreshUserData();
+        } catch {}
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('algoforge:progress-updated'));
         }
       } else {
         const failMsg = res.error_message || res.status || 'Wrong Answer';
@@ -354,12 +492,42 @@ export default function ProblemWorkspacePage() {
     }
   };
 
-  if (loading || !problem) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-slate-950 text-slate-200 flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <div className="w-8 h-8 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" />
           <span className="text-xs font-semibold text-slate-400">Loading problem studio...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (!problem) {
+    return (
+      <div className="min-h-screen bg-slate-950 text-slate-200 flex flex-col items-center justify-center p-6 text-center space-y-5">
+        <div className="w-16 h-16 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400 shadow-xl">
+          <AlertCircle className="w-8 h-8" />
+        </div>
+        <div className="space-y-2 max-w-md">
+          <h2 className="text-2xl font-black text-white">Problem Not Found</h2>
+          <p className="text-xs text-slate-400 leading-relaxed">
+            The coding problem &quot;{slug}&quot; could not be found or loaded. Explore our 290+ DSA problems catalog or start solving Two Sum.
+          </p>
+        </div>
+        <div className="flex items-center gap-3 pt-2">
+          <Link
+            href="/problems"
+            className="px-5 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs shadow-lg shadow-cyan-500/20 transition-all active:scale-95"
+          >
+            Browse All Problems
+          </Link>
+          <Link
+            href="/problems/two-sum"
+            className="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-white font-semibold text-xs transition-colors"
+          >
+            Open Two Sum
+          </Link>
         </div>
       </div>
     );
@@ -388,10 +556,17 @@ export default function ProblemWorkspacePage() {
             <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${diffBadge}`}>
               {problem.difficulty}
             </span>
-            <span className="hidden sm:flex items-center gap-1 text-[11px] font-bold text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-md">
-              <Zap className="w-3 h-3 fill-amber-400" />
-              +{problem.xp_reward} XP
-            </span>
+            {isDaily || (problem as any)?.is_daily_challenge ? (
+              <span className="hidden sm:flex items-center gap-1.5 text-[11px] font-bold text-amber-300 bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/40 px-2.5 py-0.5 rounded-full shadow-sm shadow-amber-500/10">
+                <Sparkles className="w-3 h-3 text-amber-400" />
+                Daily Challenge • +{(problem.xp_reward || 20) * 2} XP (2x Active)
+              </span>
+            ) : (
+              <span className="hidden sm:flex items-center gap-1 text-[11px] font-bold text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-md">
+                <Zap className="w-3 h-3 fill-amber-400" />
+                +{problem.xp_reward} XP
+              </span>
+            )}
           </div>
         </div>
 

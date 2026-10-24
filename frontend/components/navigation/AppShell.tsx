@@ -10,17 +10,18 @@ import { PublicNav } from '@/components/navigation/PublicNav';
 import { PublicFooter } from '@/components/navigation/PublicFooter';
 import { Cpu } from 'lucide-react';
 
-const PUBLIC_ROUTES = ['/', '/features', '/how-it-works', '/about'];
+const PUBLIC_MARKETING_ROUTES = ['/', '/features', '/how-it-works', '/about'];
 const AUTH_ROUTES = ['/login', '/register'];
+const PROTECTED_PREFIXES = ['/dashboard', '/analytics', '/achievements', '/leaderboard', '/profile', '/settings'];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const { user, isLoading } = useAuth();
 
-  const isPublicRoute = PUBLIC_ROUTES.includes(pathname);
+  const isMarketingRoute = PUBLIC_MARKETING_ROUTES.includes(pathname);
   const isAuthRoute = AUTH_ROUTES.includes(pathname);
-  const isProtectedRoute = !isPublicRoute && !isAuthRoute;
+  const isProtectedRoute = PROTECTED_PREFIXES.some(prefix => pathname === prefix || pathname.startsWith(prefix + '/'));
 
   useEffect(() => {
     if (!isLoading) {
@@ -28,7 +29,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       if (user && isAuthRoute) {
         router.replace('/dashboard');
       }
-      // If unauthenticated user visits a protected route, redirect to login
+      // If unauthenticated user visits a protected account route, redirect to login
       else if (!user && isProtectedRoute) {
         router.replace('/login');
       }
@@ -53,19 +54,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // If on a public marketing page: Render Public Layout (PublicNav + Content + PublicFooter)
-  if (isPublicRoute) {
-    return (
-      <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100">
-        <PublicNav />
-        <main className="flex-1">
-          {children}
-        </main>
-        <PublicFooter />
-      </div>
-    );
-  }
-
   // If on Auth route (login/register): Render clean auth container
   if (isAuthRoute) {
     return (
@@ -78,11 +66,36 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // For protected routes, only render if authenticated (or redirecting)
+  // If user is unauthenticated: Render Public Layout (PublicNav + Content + PublicFooter)
   if (!user) {
+    if (isProtectedRoute) {
+      return (
+        <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 text-center space-y-4">
+          <div className="text-slate-400 text-sm">Redirecting to login...</div>
+        </div>
+      );
+    }
+
     return (
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 text-center space-y-4">
-        <div className="text-slate-400 text-sm">Redirecting to login...</div>
+      <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100">
+        <PublicNav />
+        <main className="flex-1">
+          {children}
+        </main>
+        <PublicFooter />
+      </div>
+    );
+  }
+
+  // If on a marketing page and authenticated: Render with PublicNav + PublicFooter
+  if (isMarketingRoute) {
+    return (
+      <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100">
+        <PublicNav />
+        <main className="flex-1">
+          {children}
+        </main>
+        <PublicFooter />
       </div>
     );
   }

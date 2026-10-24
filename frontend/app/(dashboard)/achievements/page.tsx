@@ -180,6 +180,17 @@ export default function AchievementsPage() {
       }
     }
     loadAchievements();
+
+    const handleProgressUpdate = () => {
+      loadAchievements();
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('algoforge:progress-updated', handleProgressUpdate);
+      return () => {
+        window.removeEventListener('algoforge:progress-updated', handleProgressUpdate);
+      };
+    }
   }, []);
 
   const unlockedCount = achievements.filter((a) => a.is_unlocked).length;
