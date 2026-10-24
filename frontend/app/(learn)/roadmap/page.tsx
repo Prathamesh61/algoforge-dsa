@@ -21,6 +21,7 @@ import {
   Flame
 } from 'lucide-react';
 import { useAuth } from '@/features/auth/AuthContext';
+import { apiClient } from '@/lib/api-client';
 
 interface RoadmapNode {
   id: string;
@@ -325,15 +326,9 @@ export default function RoadmapPage() {
   useEffect(() => {
     async function loadRoadmap() {
       try {
-        const token = localStorage.getItem('algoforge_access_token');
-        const res = await fetch('http://127.0.0.1:8000/api/v1/roadmaps/dsa-mastery/', {
-          headers: token ? { Authorization: `Bearer ${token}` } : {}
-        });
-        if (res.ok) {
-          const data = await res.json();
-          if (data && data.nodes && data.nodes.length > 0) {
-            setRoadmap(data);
-          }
+        const data = await apiClient.get<RoadmapData>('/roadmaps/dsa-mastery/');
+        if (data && data.nodes && data.nodes.length > 0) {
+          setRoadmap(data);
         }
       } catch (err) {
         console.warn('Roadmap API offline, rendering seeded path.');

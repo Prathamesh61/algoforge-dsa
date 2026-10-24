@@ -1,3 +1,4 @@
+from datetime import date
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -48,6 +49,7 @@ class ProblemDetailView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
+
 class ProblemTagListView(APIView):
     permission_classes = [AllowAny]
 
@@ -55,3 +57,33 @@ class ProblemTagListView(APIView):
         tags = ProblemTag.objects.all()
         serializer = ProblemTagSerializer(tags, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class DailyProblemView(APIView):
+    """
+    GET /api/v1/problems/daily/
+    Returns a deterministically selected "Problem of the Day" based on the
+    current date, cycling through all published problems. The same problem
+    is returned for all users on a given calendar day.
+    """
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        problems = list(
+            Problem.objects.filter(is_published=True)
+            .prefetch_related('tags')
+            .order_by('created_at')
+        )
+        if not problems:
+            return Response({'error': 'No problems available yet.'}, status=status.HTTP_404_NOT_FOUND)
+
+        today = date.today()
+        day_index = today.timetuple().tm_yday  # day of year: 1–365
+        problem = problems[(day_index - 1) % len(problems)]
+
+        serializer = ProblemDetailSerializer(problem, context={'request': request})
+        data = serializer.data
+        data['is_daily'] = True
+        data['xp_multiplier'] = 2
+        data['daily_date'] = today.isoformat()
+        return Response(data, status=status.HTTP_200_OK)

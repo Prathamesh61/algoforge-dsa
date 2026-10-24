@@ -21,6 +21,8 @@ class SubmissionSerializer(serializers.ModelSerializer):
     problem_title = serializers.CharField(source='problem.title', read_only=True)
     problem_slug = serializers.CharField(source='problem.slug', read_only=True)
     test_case_results = SubmissionTestCaseResultSerializer(many=True, read_only=True)
+    submitted_at = serializers.DateTimeField(source='created_at', read_only=True)
+    xp_awarded = serializers.IntegerField(read_only=True, default=0)
 
     class Meta:
         model = Submission
@@ -29,14 +31,14 @@ class SubmissionSerializer(serializers.ModelSerializer):
             'problem_slug',
             'problem_title',
             'language',
-            'source_code',
             'status',
             'execution_time_ms',
             'memory_used_kb',
             'tests_passed',
             'tests_total',
             'error_message',
-            'created_at',
+            'xp_awarded',
+            'submitted_at',
             'test_case_results'
         ]
         read_only_fields = [
@@ -47,6 +49,7 @@ class SubmissionSerializer(serializers.ModelSerializer):
             'tests_passed',
             'tests_total',
             'error_message',
-            'created_at',
+            'xp_awarded',
+            'submitted_at',
             'test_case_results'
         ]

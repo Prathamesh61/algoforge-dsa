@@ -100,9 +100,14 @@ class SubmissionEvaluator:
         profile = getattr(user, 'profile', None)
         if profile and not prior_solved:
             # First time solved: award XP and increment count
-            profile.total_xp += problem.xp_reward
+            xp = problem.xp_reward
+            profile.total_xp += xp
             profile.problems_solved_count += 1
             profile.current_level = (profile.total_xp // 100) + 1
+
+            # Persist XP on the submission itself
+            submission.xp_awarded = xp
+            submission.save(update_fields=['xp_awarded'])
 
             # Update streak
             today = timezone.now().date()

@@ -18,6 +18,7 @@ import {
   Search
 } from 'lucide-react';
 import { useAuth } from '@/features/auth/AuthContext';
+import { apiClient } from '@/lib/api-client';
 
 interface Achievement {
   id: string;
@@ -170,15 +171,9 @@ export default function AchievementsPage() {
   useEffect(() => {
     async function loadAchievements() {
       try {
-        const token = localStorage.getItem('algoforge_access_token');
-        const res = await fetch('http://127.0.0.1:8000/api/v1/achievements/', {
-          headers: token ? { Authorization: `Bearer ${token}` } : {}
-        });
-        if (res.ok) {
-          const data = await res.json();
-          if (Array.isArray(data) && data.length > 0) {
-            setAchievements(data);
-          }
+        const data = await apiClient.get<Achievement[]>('/achievements/');
+        if (Array.isArray(data) && data.length > 0) {
+          setAchievements(data);
         }
       } catch (e) {
         console.warn('Achievements endpoint offline, showing seeded achievements.');

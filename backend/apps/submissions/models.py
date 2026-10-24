@@ -37,6 +37,7 @@ class Submission(models.Model):
     tests_passed = models.PositiveIntegerField(default=0)
     tests_total = models.PositiveIntegerField(default=0)
     error_message = models.TextField(blank=True, default='')
+    xp_awarded = models.PositiveIntegerField(default=0)
 
     created_at = models.DateTimeField(auto_now_add=True)
 

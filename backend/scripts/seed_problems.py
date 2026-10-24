@@ -63,8 +63,14 @@ You can return the answer in any order.""",
             "starter_templates": {
                 "python": "import sys\n\ndef two_sum(nums, target):\n    # Write your solution here\n    seen = {}\n    for i, num in enumerate(nums):\n        complement = target - num\n        if complement in seen:\n            return [seen[complement], i]\n        seen[num] = i\n    return []\n\nif __name__ == '__main__':\n    lines = sys.stdin.read().strip().split('\\n')\n    if len(lines) >= 2:\n        nums = list(map(int, lines[0].split()))\n        target = int(lines[1])\n        result = two_sum(nums, target)\n        print(' '.join(map(str, result)))\n",
                 "javascript": "const fs = require('fs');\n\nfunction twoSum(nums, target) {\n    // Write your solution here\n    const seen = new Map();\n    for (let i = 0; i < nums.length; i++) {\n        const complement = target - nums[i];\n        if (seen.has(complement)) {\n            return [seen.get(complement), i];\n        }\n        seen.set(nums[i], i);\n    }\n    return [];\n}\n\nconst input = fs.readFileSync(0, 'utf-8').trim().split('\\n');\nif (input.length >= 2) {\n    const nums = input[0].trim().split(/\\s+/).map(Number);\n    const target = Number(input[1]);\n    const res = twoSum(nums, target);\n    console.log(res.join(' '));\n}\n",
-                "cpp": "#include <iostream>\n#include <vector>\n#include <unordered_map>\n#include <sstream>\n\nusing namespace std;\n\nvector<int> twoSum(vector<int>& nums, int target) {\n    unordered_map<int, int> seen;\n    for (int i = 0; i < nums.size(); i++) {\n        int comp = target - nums[i];\n        if (seen.find(comp) != seen.end()) {\n            return {seen[comp], i};\n        }\n        seen[nums[i]] = i;\n    }\n    return {};\n}\n\nint main() {\n    string line;\n    if (getline(cin, line)) {\n        stringstream ss(line);\n        vector<int> nums;\n        int n;\n        while (ss >> n) nums.push_back(n);\n        int target;\n        if (cin >> target) {\n            auto res = twoSum(nums, target);\n            if (res.size() >= 2) cout << res[0] << \" \" << res[1] << endl;\n        }\n    }\n    return 0;\n}\n"
+                "cpp": "#include <iostream>\n#include <vector>\n#include <unordered_map>\n#include <sstream>\n\nusing namespace std;\n\nvector<int> twoSum(vector<int>& nums, int target) {\n    unordered_map<int, int> seen;\n    for (int i = 0; i < nums.size(); i++) {\n        int comp = target - nums[i];\n        if (seen.find(comp) != seen.end()) {\n            return {seen[comp], i};\n        }\n        seen[nums[i]] = i;\n    }\n    return {};\n}\n\nint main() {\n    string line;\n    if (getline(cin, line)) {\n        stringstream ss(line);\n        vector<int> nums;\n        int n;\n        while (ss >> n) nums.push_back(n);\n        int target;\n        if (cin >> target) {\n            auto res = twoSum(nums, target);\n            if (res.size() >= 2) cout << res[0] << \" \" << res[1] << endl;\n        }\n    }\n    return 0;\n}\n",
+                "java": "import java.util.*;\nimport java.io.*;\n\npublic class Solution {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        if (!sc.hasNextLine()) return;\n        String[] parts = sc.nextLine().trim().split(\"\\\\s+\");\n        int[] nums = new int[parts.length];\n        for (int i = 0; i < parts.length; i++) nums[i] = Integer.parseInt(parts[i]);\n        if (!sc.hasNextInt()) return;\n        int target = sc.nextInt();\n        Map<Integer, Integer> map = new HashMap<>();\n        for (int i = 0; i < nums.length; i++) {\n            int comp = target - nums[i];\n            if (map.containsKey(comp)) {\n                System.out.println(map.get(comp) + \" \" + i);\n                return;\n            }\n            map.put(nums[i], i);\n        }\n    }\n}\n"
             },
+            "hints": [
+                "A brute-force solution checks every pair (i, j) with i < j in O(N²) time. Can we find the partner in O(1) time?",
+                "For any element x = nums[i], what number complement do we need? complement = target - x. How can we check if complement exists and retrieve its index?",
+                "Use a Hash Map where keys are visited numbers and values are their array indices. As you iterate through nums, check if (target - num) is in the map. If yes, return [seen[target - num], current_index] in O(N) time!"
+            ],
             "test_cases": [
                 {"input_data": "2 7 11 15\n9", "expected_output": "0 1", "is_hidden": False, "weight": 1, "display_order": 1},
                 {"input_data": "3 2 4\n6", "expected_output": "1 2", "is_hidden": False, "weight": 1, "display_order": 2},
@@ -279,7 +285,7 @@ The overall run time complexity should be `O(log (m+n))`.""",
     ]
 
     for p_data in problems_data:
-        p, created = Problem.objects.get_or_create(
+        p, created = Problem.objects.update_or_create(
             slug=p_data["slug"],
             defaults={
                 "title": p_data["title"],
@@ -293,6 +299,7 @@ The overall run time complexity should be `O(log (m+n))`.""",
                 "time_limit_ms": p_data["time_limit_ms"],
                 "memory_limit_mb": p_data["memory_limit_mb"],
                 "starter_templates": p_data["starter_templates"],
+                "hints": p_data.get("hints", []),
             }
         )
         # Link tags

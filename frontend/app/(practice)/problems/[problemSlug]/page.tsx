@@ -30,7 +30,12 @@ import {
   Activity,
   Bug,
   HelpCircle,
-  Gauge
+  Gauge,
+  Eye,
+  EyeOff,
+  Lock,
+  Unlock,
+  ChevronDown
 } from 'lucide-react';
 import { ProblemDetail, ProblemDifficulty } from '@/types';
 import { apiClient } from '@/lib/api-client';
@@ -50,9 +55,12 @@ export default function ProblemWorkspacePage() {
   const [loading, setLoading] = useState(true);
 
   // Studio State
-  const [language, setLanguage] = useState<'python' | 'javascript' | 'cpp'>('python');
+  const [language, setLanguage] = useState<'python' | 'javascript' | 'cpp' | 'java'>('python');
   const [code, setCode] = useState<string>('');
   const [activeTab, setActiveTab] = useState<'description' | 'submissions' | 'hints'>('description');
+  const [revealedHints, setRevealedHints] = useState<number[]>([0]);
+  const [submissions, setSubmissions] = useState<any[]>([]);
+  const [submissionsLoading, setSubmissionsLoading] = useState(false);
   const [selectedTestCaseIndex, setSelectedTestCaseIndex] = useState<number>(0);
   const [customInput, setCustomInput] = useState<string>('');
   const [isCustomMode, setIsCustomMode] = useState<boolean>(false);
@@ -114,10 +122,12 @@ export default function ProblemWorkspacePage() {
   }, [slug]);
 
   // Handle language switch
-  const handleLanguageChange = (newLang: 'python' | 'javascript' | 'cpp') => {
+  const handleLanguageChange = (newLang: 'python' | 'javascript' | 'cpp' | 'java') => {
     setLanguage(newLang);
     if (problem?.starter_templates?.[newLang]) {
       setCode(problem.starter_templates[newLang]);
+    } else if (newLang === 'java') {
+      setCode(`import java.util.*;\nimport java.io.*;\n\npublic class Solution {\n    public static void main(String[] args) {\n        Scanner scanner = new Scanner(System.in);\n        // Write your solution here\n    }\n}\n`);
     }
   };
 
@@ -125,12 +135,14 @@ export default function ProblemWorkspacePage() {
   const handleResetCode = () => {
     if (problem?.starter_templates?.[language]) {
       setCode(problem.starter_templates[language]);
-      setRunResult({ status: 'idle', actualOutput: '' });
-      setTraceData(null);
-      setCurrentStepIndex(0);
-      setIsPlaying(false);
-      clearMonacoHighlights();
+    } else if (language === 'java') {
+      setCode(`import java.util.*;\nimport java.io.*;\n\npublic class Solution {\n    public static void main(String[] args) {\n        Scanner scanner = new Scanner(System.in);\n        // Write your solution here\n    }\n}\n`);
     }
+    setRunResult({ status: 'idle', actualOutput: '' });
+    setTraceData(null);
+    setCurrentStepIndex(0);
+    setIsPlaying(false);
+    clearMonacoHighlights();
   };
 
   const clearMonacoHighlights = () => {
@@ -449,6 +461,31 @@ export default function ProblemWorkspacePage() {
             </button>
 
             <button
+              onClick={async () => {
+                setActiveTab('submissions');
+                if (submissions.length === 0) {
+                  setSubmissionsLoading(true);
+                  try {
+                    const data = await apiClient.get<any>(`/submissions/?problem_slug=${slug}`);
+                    setSubmissions(Array.isArray(data) ? data : (data?.results ?? []));
+                  } catch {
+                    setSubmissions([]);
+                  } finally {
+                    setSubmissionsLoading(false);
+                  }
+                }
+              }}
+              className={`flex items-center gap-1.5 pb-2.5 pt-3 transition-colors border-b-2 ${
+                activeTab === 'submissions'
+                  ? 'border-cyan-400 text-cyan-400'
+                  : 'border-transparent hover:text-slate-200'
+              }`}
+            >
+              <History className="w-3.5 h-3.5" />
+              <span>Submissions</span>
+            </button>
+
+            <button
               onClick={() => setActiveTab('hints')}
               className={`flex items-center gap-1.5 pb-2.5 pt-3 transition-colors border-b-2 ${
                 activeTab === 'hints'
@@ -535,13 +572,211 @@ export default function ProblemWorkspacePage() {
               </>
             )}
 
+            {activeTab === 'submissions' && (
+              <div className="space-y-3">
+                <h3 className="font-semibold text-slate-100 text-sm">My Submissions</h3>
+                {submissionsLoading ? (
+                  <div className="flex items-center gap-2 text-slate-400 text-xs py-8 justify-center">
+                    <div className="w-4 h-4 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" />
+                    Loading submissions...
+                  </div>
+                ) : submissions.length === 0 ? (
+                  <div className="flex flex-col items-center gap-3 py-10 text-center">
+                    <div className="w-12 h-12 rounded-2xl bg-slate-800 border border-slate-700 flex items-center justify-center">
+                      <History className="w-6 h-6 text-slate-500" />
+                    </div>
+                    <p className="text-xs text-slate-400 max-w-[220px]">
+                      No submissions yet. Submit your first solution to see results here.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {submissions.map((sub: any, i: number) => {
+                      const accepted = sub.status === 'Accepted' || sub.verdict === 'Accepted';
+                      return (
+                        <div
+                          key={sub.id ?? i}
+                          className={`rounded-xl border p-3 flex items-center justify-between gap-3 text-xs transition-all hover:bg-slate-800/60 ${
+                            accepted
+                              ? 'bg-emerald-950/20 border-emerald-500/20'
+                              : 'bg-rose-950/10 border-rose-500/15'
+                          }`}
+                        >
+                          {/* Verdict badge */}
+                          <div className="flex items-center gap-2 min-w-0">
+                            {accepted ? (
+                              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                            ) : (
+                              <XCircle className="w-4 h-4 text-rose-400 shrink-0" />
+                            )}
+                            <div className="min-w-0">
+                              <p className={`font-bold truncate ${
+                                accepted ? 'text-emerald-400' : 'text-rose-400'
+                              }`}>
+                                {sub.status || sub.verdict || 'Unknown'}
+                              </p>
+                              <p className="text-slate-500 text-[11px]">
+                                {sub.language} &middot;{' '}
+                                {sub.submitted_at
+                                  ? new Date(sub.submitted_at).toLocaleString('en-US', {
+                                      month: 'short', day: 'numeric',
+                                      hour: '2-digit', minute: '2-digit'
+                                    })
+                                  : 'Just now'}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Stats */}
+                          <div className="flex items-center gap-3 shrink-0">
+                            {sub.execution_time_ms && (
+                              <span className="flex items-center gap-1 text-slate-500">
+                                <Clock className="w-3 h-3" />
+                                {sub.execution_time_ms} ms
+                              </span>
+                            )}
+                            {sub.xp_awarded > 0 && (
+                              <span className="flex items-center gap-1 font-bold text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-lg">
+                                <Zap className="w-3 h-3" />
+                                +{sub.xp_awarded} XP
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+
             {activeTab === 'hints' && (
               <div className="space-y-4">
-                <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-300 leading-relaxed">
-                  <p className="font-semibold mb-1 flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5" /> Algorithmic Tip
-                  </p>
-                  Think about whether a brute-force approach can be optimized to linear or logarithmic time using a hash map, two-pointer boundary search, or dynamic programming state.
+                {/* Header bar */}
+                <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+                  <div className="flex items-center gap-2">
+                    <span className="p-1.5 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                      <Lightbulb className="w-4 h-4" />
+                    </span>
+                    <div>
+                      <h4 className="text-xs font-bold text-slate-200">Algorithmic Guidance</h4>
+                      <p className="text-[11px] text-slate-400">
+                        {problem?.hints && problem.hints.length > 0
+                          ? `${revealedHints.length} of ${problem.hints.length} hints unlocked`
+                          : 'Progressive intuition breakdown'}
+                      </p>
+                    </div>
+                  </div>
+                  {problem?.hints && problem.hints.length > 0 && (
+                    <button
+                      onClick={() => {
+                        if (revealedHints.length === problem.hints?.length) {
+                          setRevealedHints([0]);
+                        } else {
+                          setRevealedHints(problem.hints?.map((_, idx) => idx) || []);
+                        }
+                      }}
+                      className="text-[11px] font-semibold text-cyan-400 hover:text-cyan-300 transition-colors flex items-center gap-1"
+                    >
+                      {revealedHints.length === problem.hints?.length ? (
+                        <>
+                          <EyeOff className="w-3.5 h-3.5" /> Collapse
+                        </>
+                      ) : (
+                        <>
+                          <Eye className="w-3.5 h-3.5" /> Reveal All
+                        </>
+                      )}
+                    </button>
+                  )}
+                </div>
+
+                {/* Progressive Hints List */}
+                {problem?.hints && problem.hints.length > 0 ? (
+                  <div className="space-y-3">
+                    {problem.hints.map((hintText, index) => {
+                      const isRevealed = revealedHints.includes(index);
+                      const hintTitles = [
+                        'Hint 1: Intuition & Pattern',
+                        'Hint 2: Optimization & Approach',
+                        'Hint 3: Invariants & Complexity',
+                        `Hint ${index + 1}: Key Detail`,
+                      ];
+                      const title = hintTitles[index] || `Hint ${index + 1}`;
+
+                      return (
+                        <div
+                          key={index}
+                          className={`rounded-xl border transition-all duration-200 overflow-hidden ${
+                            isRevealed
+                              ? 'bg-slate-900/80 border-slate-700/80'
+                              : 'bg-slate-950/60 border-slate-800/80 hover:border-slate-700'
+                          }`}
+                        >
+                          <button
+                            onClick={() => {
+                              if (isRevealed) {
+                                setRevealedHints((prev) => prev.filter((i) => i !== index));
+                              } else {
+                                setRevealedHints((prev) => [...prev, index]);
+                              }
+                            }}
+                            className="w-full px-4 py-3 flex items-center justify-between text-left transition-colors"
+                          >
+                            <div className="flex items-center gap-2.5">
+                              <span
+                                className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
+                                  isRevealed
+                                    ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                                    : 'bg-slate-800 text-slate-400 border border-slate-700'
+                                }`}
+                              >
+                                {index + 1}
+                              </span>
+                              <span className="text-xs font-semibold text-slate-200">
+                                {title}
+                              </span>
+                            </div>
+
+                            <div className="flex items-center gap-1.5 text-[11px] text-slate-400">
+                              {isRevealed ? (
+                                <span className="flex items-center gap-1 text-slate-400">
+                                  <Unlock className="w-3 h-3 text-emerald-400" />
+                                  Hide
+                                </span>
+                              ) : (
+                                <span className="flex items-center gap-1 text-amber-400 font-medium">
+                                  <Lock className="w-3 h-3" />
+                                  Unlock
+                                </span>
+                              )}
+                            </div>
+                          </button>
+
+                          {isRevealed && (
+                            <div className="px-4 pb-3.5 pt-1 text-xs text-slate-300 leading-relaxed border-t border-slate-800/60 bg-slate-950/40">
+                              <p className="whitespace-pre-wrap">{hintText}</p>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-300 leading-relaxed">
+                    <p className="font-semibold mb-1 flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5" /> Algorithmic Tip
+                    </p>
+                    Think about whether a brute-force approach can be optimized to linear or logarithmic time using a hash map, two-pointer boundary search, or dynamic programming state.
+                  </div>
+                )}
+
+                {/* Best practice callout */}
+                <div className="p-3 rounded-lg bg-cyan-950/20 border border-cyan-500/20 text-[11px] text-cyan-300 flex items-start gap-2">
+                  <Sparkles className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
+                  <span>
+                    <strong>Practice Tip:</strong> Try writing pseudocode for your approach after unlocking each hint before reading the next one.
+                  </span>
                 </div>
               </div>
             )}
@@ -565,6 +800,7 @@ export default function ProblemWorkspacePage() {
                 <option value="python">Python 3 (Full Tracer Support)</option>
                 <option value="javascript">JavaScript (Node.js)</option>
                 <option value="cpp">C++ (GCC)</option>
+                <option value="java">Java (OpenJDK)</option>
               </select>
             </div>
 

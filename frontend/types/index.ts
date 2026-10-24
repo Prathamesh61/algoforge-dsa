@@ -132,6 +132,7 @@ export interface ProblemDetail {
   time_limit_ms: number;
   memory_limit_mb: number;
   starter_templates: Record<string, string>;
+  hints?: string[];
   public_test_cases: {
     id: string;
     input_data: string;
@@ -153,6 +154,7 @@ export interface Problem {
   inputFormat?: string;
   outputFormat?: string;
   constraints?: string;
+  hints?: string[];
   timeLimitMs: number;
   memoryLimitMb: number;
   starterTemplates: Record<string, string>;

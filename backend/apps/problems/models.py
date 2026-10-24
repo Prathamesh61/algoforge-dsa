@@ -44,6 +44,9 @@ class Problem(models.Model):
     # Multi-language starter code templates
     starter_templates = models.JSONField(default=dict)
 
+    # Progressive algorithmic hints
+    hints = models.JSONField(default=list, blank=True)
+
     is_published = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 

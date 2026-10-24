@@ -71,6 +71,22 @@ int main() {{
 }}
 '''
 
+def get_java_starter(title, slug):
+    return f'''import java.util.*;
+import java.io.*;
+
+public class Solution {{
+    // Solution for {title}
+    public static void main(String[] args) throws Exception {{
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        String line = br.readLine();
+        if (line == null) return;
+        // Read inputs and print result to standard output
+        System.out.println(line);
+    }}
+}}
+'''
+
 def run():
     print("=" * 60)
     print("Seeding Expanded DSA Problem Bank (Target: 300 Quality Problems)...")
@@ -458,6 +474,7 @@ def run():
                     "python": get_python_starter(title, slug),
                     "javascript": get_js_starter(title, slug),
                     "cpp": get_cpp_starter(title, slug),
+                    "java": get_java_starter(title, slug),
                 },
                 "is_published": True,
             }

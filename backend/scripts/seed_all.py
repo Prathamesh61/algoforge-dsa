@@ -24,11 +24,25 @@ def run_all():
         print(f"Error seeding courses: {e}")
 
     try:
+        from scripts.seed_course_lessons import run as seed_course_lessons
+        print("\n--- 1b. Seeding Additional Course Lessons ---")
+        seed_course_lessons()
+    except Exception as e:
+        print(f"Error seeding course lessons: {e}")
+
+    try:
         from scripts.seed_problems import run as seed_problems
-        print("\n--- 2. Seeding Problems & Test Cases ---")
+        print("\n--- 2. Seeding Core Problems & Test Cases ---")
         seed_problems()
     except Exception as e:
         print(f"Error seeding problems: {e}")
+
+    try:
+        from scripts.seed_problems_expanded import run as seed_problems_expanded
+        print("\n--- 2b. Seeding Expanded Problem Library (290+ problems) ---")
+        seed_problems_expanded()
+    except Exception as e:
+        print(f"Error seeding expanded problems: {e}")
 
     try:
         from scripts.seed_achievements import run as seed_achievements
